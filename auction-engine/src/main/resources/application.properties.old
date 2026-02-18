@@ -1,17 +1,18 @@
-# Configuration de la base de donnÃ©es
+spring.application.name=auction-engine
+# Configuration de la base de données
 spring.datasource.url=jdbc:postgresql://localhost:5432/auction_db
 spring.datasource.username=user
 spring.datasource.password=password
 spring.jpa.hibernate.ddl-auto=update
 spring.jpa.show-sql=true
 
-# Logs pour voir les requÃªtes SQL
+# Logs pour voir les requêtes SQL
 spring.jpa.properties.hibernate.format_sql=true
 logging.level.org.hibernate.SQL=DEBUG
 logging.level.org.hibernate.type.descriptor.sql.BasicBinder=TRACE
 
-# Messages d'erreur dÃ©taillÃ©s
+# Messages d'erreur détaillés
 server.error.include-message=always
 
-# Debug (optionnel, Ã  enlever plus tard)
+# Debug (optionnel, à enlever plus tard)
 debug=true

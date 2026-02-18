@@ -69,23 +69,32 @@ AuctionHub/
 ```bash
 git clone <repo-url>
 cd AuctionHub
+```
 
 ## 2️⃣ Lancer PostgreSQL avec Docker
+```
 docker-compose up -d
-
+```
 ## 3️⃣ Lancer le Backend
+
+```
 cd auction-engine
 ./mvnw spring-boot:run
+```
 
 Backend disponible sur :
+```
 http://localhost:8080
+```
 
 ## 4️⃣ Lancer le Frontend
+```
 cd auction-frontend
 npm install
 ng serve
-
+```
 Frontend disponible sur :
+```
 http://localhost:4200
 ```
 

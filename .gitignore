@@ -1,0 +1,42 @@
+############################
+# BACKEND (Java / Spring)
+############################
+target/
+*.log
+*.class
+*.jar
+
+############################
+# FRONTEND (Angular / Node)
+############################
+
+# Compiled output
+/dist
+/tmp
+/out-tsc
+/bazel-out
+
+# Node
+/node_modules
+npm-debug.log
+yarn-error.log
+
+# Angular cache
+/.angular/cache
+
+# Coverage
+/coverage
+
+############################
+# IDE / OS
+############################
+.idea/
+.vscode/*
+!.vscode/settings.json
+!.vscode/tasks.json
+!.vscode/launch.json
+!.vscode/extensions.json
+!.vscode/mcp.json
+.history/*
+.DS_Store
+Thumbs.db

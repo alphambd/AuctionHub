@@ -9,6 +9,8 @@ import com.auction.auction_engine.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
@@ -43,15 +45,23 @@ public class ProductController {
 
     @PostMapping
     public ResponseEntity<ProductDTO> createProduct(@RequestBody ProductRequest productRequest) {
-        if (productRequest.getSellerId() == null) {
-            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "sellerId est requis");
-        }
+        // Récupérer l'utilisateur connecté
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName();
 
-        User seller = userRepository.findById(productRequest.getSellerId())
+        User seller = userRepository.findByEmail(email)
                 .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND, "Vendeur non trouvé avec l'id: " + productRequest.getSellerId()
+                        HttpStatus.NOT_FOUND, "Vendeur non trouvé"
                 ));
 
+        // Vérifier que l'utilisateur a le rôle SELLER
+        if (!"SELLER".equals(seller.getRole())) {
+            throw new ResponseStatusException(
+                    HttpStatus.FORBIDDEN, "Seuls les vendeurs peuvent créer des produits"
+            );
+        }
+
+        // Reste du code identique...
         Product product = new Product();
         product.setName(productRequest.getName());
         product.setDescription(productRequest.getDescription());
@@ -103,7 +113,6 @@ class ProductRequest {
     private String description;
     private Double startingPrice;
     private LocalDateTime endTime;
-    private Long sellerId;
 
     // Getters et setters
     public String getName() { return name; }
@@ -118,6 +127,4 @@ class ProductRequest {
     public LocalDateTime getEndTime() { return endTime; }
     public void setEndTime(LocalDateTime endTime) { this.endTime = endTime; }
 
-    public Long getSellerId() { return sellerId; }
-    public void setSellerId(Long sellerId) { this.sellerId = sellerId; }
 }

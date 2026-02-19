@@ -13,6 +13,8 @@ import com.auction.auction_engine.repositories.UserRepository;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.Authentication;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.server.ResponseStatusException;
 import java.time.LocalDateTime;
@@ -35,14 +37,24 @@ public class BidController {
 
     @PostMapping
     public ResponseEntity<BidDTO> placeBid(@RequestBody BidRequest bidRequest) {
-        // 1. Vérifier que le produit existe
+        // 1. Récupérer l'utilisateur connecté depuis le token JWT
+        Authentication authentication = SecurityContextHolder.getContext().getAuthentication();
+        String email = authentication.getName(); // Récupère l'email (subject du token)
+
+        User bidder = userRepository.findByEmail(email)
+                .orElseThrow(() -> new ResponseStatusException(
+                        HttpStatus.NOT_FOUND,
+                        "Utilisateur non trouvé avec l'email: " + email
+                ));
+
+        // 2. Vérifier que le produit existe
         Product product = productRepository.findById(bidRequest.getProductId())
                 .orElseThrow(() -> new ResponseStatusException(
                         HttpStatus.NOT_FOUND,
                         "Produit non trouvé avec l'id: " + bidRequest.getProductId()
                 ));
 
-        // 2. Vérifier que le produit est actif
+        // 3. Vérifier que le produit est actif
         if (!product.isActive()) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -50,20 +62,13 @@ public class BidController {
             );
         }
 
-        // 3. Vérifier que la date de fin n'est pas dépassée
+        // 4. Vérifier que la date de fin n'est pas dépassée
         if (product.getEndTime().isBefore(LocalDateTime.now())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
                     "Les enchères sont terminées pour ce produit"
             );
         }
-
-        // 4. Vérifier que l'utilisateur existe
-        User bidder = userRepository.findById(bidRequest.getUserId())
-                .orElseThrow(() -> new ResponseStatusException(
-                        HttpStatus.NOT_FOUND,
-                        "Utilisateur non trouvé avec l'id: " + bidRequest.getUserId()
-                ));
 
         // 5. Vérifier que le montant est supérieur au prix actuel
         if (bidRequest.getAmount() <= product.getCurrentPrice()) {
@@ -73,7 +78,7 @@ public class BidController {
             );
         }
 
-        // 6. Vérifier que l'utilisateur n'est pas le vendeur (un vendeur ne peut pas enchérir sur son propre produit)
+        // 6. Vérifier que l'utilisateur n'est pas le vendeur
         if (bidder.getId().equals(product.getSeller().getId())) {
             throw new ResponseStatusException(
                     HttpStatus.BAD_REQUEST,
@@ -84,7 +89,7 @@ public class BidController {
         // 7. Créer et sauvegarder l'enchère
         Bid bid = new Bid();
         bid.setAmount(bidRequest.getAmount());
-        bid.setUser(bidder);
+        bid.setUser(bidder);  // Utilise l'utilisateur connecté
         bid.setProduct(product);
         bid.setCreatedAt(LocalDateTime.now());
 

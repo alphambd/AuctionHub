@@ -1,0 +1,161 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test WebSocket Enchères</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 20px; }
+        button { padding: 10px; margin: 5px; cursor: pointer; }
+        #messages {
+            border: 1px solid #ccc;
+            padding: 10px;
+            margin-top: 20px;
+            max-height: 400px;
+            overflow-y: auto;
+        }
+        .message {
+            padding: 8px;
+            margin: 5px 0;
+            border-radius: 5px;
+        }
+        .success { background-color: #d4edda; color: #155724; }
+        .info { background-color: #d1ecf1; color: #0c5460; }
+        .bid { background-color: #fff3cd; color: #856404; }
+        .error { background-color: #f8d7da; color: #721c24; }
+    </style>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.6.1/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+</head>
+<body>
+<h1>🧪 Test WebSocket - Enchères en temps réel</h1>
+
+<div>
+    <h3>Connexion</h3>
+    <button onclick="connect()">🔌 Se connecter</button>
+    <button onclick="disconnect()">🔌 Se déconnecter</button>
+    <span id="connection-status" style="margin-left: 20px;">🔴 Déconnecté</span>
+</div>
+
+<div style="margin-top: 20px;">
+    <h3>Abonnement</h3>
+    <label>Produit ID: <input type="number" id="productId" value="1" min="1"></label>
+    <button onclick="subscribe()">📡 S'abonner</button>
+    <button onclick="unsubscribe()">🚫 Se désabonner</button>
+</div>
+
+<div style="margin-top: 20px;">
+    <h3>Instructions</h3>
+    <ol>
+        <li>Clique sur "Se connecter"</li>
+        <li>Clique sur "S'abonner" pour un produit</li>
+        <li>Ouvre Postman et place une enchère sur ce produit</li>
+        <li>Regarde les messages apparaître ci-dessous !</li>
+    </ol>
+</div>
+
+<div id="messages">
+    <h3>📨 Messages reçus :</h3>
+</div>
+
+<script>
+    let stompClient = null;
+    let currentSubscription = null;
+
+    function addMessage(text, type = 'info') {
+        const messages = document.getElementById('messages');
+        const messageDiv = document.createElement('div');
+        messageDiv.className = `message ${type}`;
+
+        const timestamp = new Date().toLocaleTimeString();
+        messageDiv.innerHTML = `[${timestamp}] ${text}`;
+
+        messages.appendChild(messageDiv);
+        // Auto-scroll vers le bas
+        messages.scrollTop = messages.scrollHeight;
+    }
+
+    function updateConnectionStatus(connected) {
+        const status = document.getElementById('connection-status');
+        if (connected) {
+            status.innerHTML = '🟢 Connecté';
+            status.style.color = 'green';
+        } else {
+            status.innerHTML = '🔴 Déconnecté';
+            status.style.color = 'red';
+        }
+    }
+
+    function connect() {
+        addMessage('Tentative de connexion...', 'info');
+
+        const socket = new SockJS('http://localhost:8080/ws');
+        stompClient = Stomp.over(socket);
+
+        // Désactive le logging de debug de STOMP
+        stompClient.debug = () => {};
+
+        stompClient.connect({},
+            function(frame) {
+                addMessage('✅ Connecté au serveur WebSocket!', 'success');
+                updateConnectionStatus(true);
+            },
+            function(error) {
+                addMessage('❌ Erreur de connexion: ' + error, 'error');
+                updateConnectionStatus(false);
+            }
+        );
+    }
+
+    function disconnect() {
+        if (stompClient) {
+            stompClient.disconnect();
+            stompClient = null;
+            updateConnectionStatus(false);
+            addMessage('🔌 Déconnecté du serveur', 'info');
+        }
+    }
+
+    function subscribe() {
+        if (!stompClient || !stompClient.connected) {
+            addMessage('❌ Pas connecté au serveur. Connecte-toi d\'abord!', 'error');
+            return;
+        }
+
+        const productId = document.getElementById('productId').value;
+
+        // Se désabonner du précédent si existant
+        if (currentSubscription) {
+            currentSubscription.unsubscribe();
+        }
+
+        addMessage(`🔄 Abonnement au produit #${productId}...`, 'info');
+
+        currentSubscription = stompClient.subscribe('/topic/product/' + productId,
+            function(message) {
+                const bid = JSON.parse(message.body);
+                addMessage(
+                    `💰 ${bid.message} (ID: ${bid.productId}, Prix: ${bid.newPrice}€)`,
+                    'bid'
+                );
+            }
+        );
+
+        addMessage(`✅ Abonné au produit #${productId} avec succès!`, 'success');
+    }
+
+    function unsubscribe() {
+        if (currentSubscription) {
+            currentSubscription.unsubscribe();
+            currentSubscription = null;
+            addMessage('🚫 Désabonné du produit', 'info');
+        }
+    }
+
+    // Nettoie la connexion si on quitte la page
+    window.onbeforeunload = function() {
+        if (stompClient) {
+            stompClient.disconnect();
+        }
+    };
+</script>
+</body>
+</html>

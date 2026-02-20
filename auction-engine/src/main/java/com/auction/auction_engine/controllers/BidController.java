@@ -10,6 +10,7 @@ import com.auction.auction_engine.entities.User;
 import com.auction.auction_engine.repositories.BidRepository;
 import com.auction.auction_engine.repositories.ProductRepository;
 import com.auction.auction_engine.repositories.UserRepository;
+import com.auction.auction_engine.services.WebSocketService;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
@@ -34,6 +35,9 @@ public class BidController {
 
     @Autowired
     private UserRepository userRepository;
+
+    @Autowired
+    private WebSocketService webSocketService;
 
     @PostMapping
     public ResponseEntity<BidDTO> placeBid(@RequestBody BidRequest bidRequest) {
@@ -99,7 +103,15 @@ public class BidController {
         product.setCurrentPrice(bidRequest.getAmount());
         productRepository.save(product);
 
-        // 9. Retourner l'enchère créée
+        // 9. Diffuser l'information en temps réel
+        String bidderFullName = bidder.getFirstName() + " " + bidder.getLastName();
+        webSocketService.broadcastBidUpdate(
+                product.getId(),
+                bidRequest.getAmount(),
+                bidderFullName
+        );
+
+        // 10. Retourner l'enchère créée
         return new ResponseEntity<>(convertToDTO(savedBid), HttpStatus.CREATED);
     }
 

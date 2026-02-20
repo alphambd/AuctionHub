@@ -1,0 +1,27 @@
+<nav class="navbar">
+  <div class="nav-container">
+    <a class="nav-brand" routerLink="/">AuctionHub</a>
+    <div class="nav-links">
+      <a routerLink="/products" routerLinkActive="active">Produits</a>
+
+      @if (authService.currentUser$ | async; as user) {
+        <span class="user-info">{{ user.firstName }} {{ user.lastName }}</span>
+        <button class="btn-logout" (click)="logout()">Déconnexion</button>
+      } @else {
+        <a routerLink="/login" routerLinkActive="active">Connexion</a>
+        <a routerLink="/register" routerLinkActive="active">Inscription</a>
+      }
+    </div>
+  </div>
+</nav>
+
+<main>
+  <router-outlet></router-outlet>
+</main>
+
+<!-- Polyfill pour global -->
+<script>
+  if (typeof window !== 'undefined' && !window.global) {
+    window.global = window;
+  }
+</script>

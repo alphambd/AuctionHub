@@ -25,8 +25,8 @@ jobs:
       - name: Build Backend with Maven
         working-directory: ./auction-engine
         run: |
-          mvn clean package
-          echo "✅ Backend compilé avec succès"
+          mvn clean package -Dspring.profiles.active=test
+          echo "✅ Backend compilé et empaqueté avec succès"
 
       # Frontend
       - name: Set up Node.js
@@ -60,7 +60,7 @@ jobs:
 
       - name: Run Backend Tests
         working-directory: ./auction-engine
-        run: mvn test
+        run: mvn test -Dspring.profiles.active=test
         continue-on-error: true
 
       - name: Upload Backend JAR

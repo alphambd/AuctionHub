@@ -24,7 +24,6 @@ jobs:
 
       - name: Build Backend with Maven
         run: |
-          cd auction-engine
           mvn clean compile
           echo "✅ Backend compilé avec succès"
 
@@ -58,14 +57,12 @@ jobs:
 
       - name: Build Frontend
         run: |
-          cd auction-frontend
           npm run build
           echo "✅ Frontend compilé avec succès"
 
       - name: Run Backend Tests
-        run: |
-          cd auction-engine
-          mvn test
+        working-directory: ./auction-engine
+        run: mvn test
         continue-on-error: true
 
       - name: Upload Backend JAR

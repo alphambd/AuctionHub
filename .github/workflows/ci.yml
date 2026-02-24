@@ -1,77 +1,59 @@
 name: CI/CD Pipeline
 
-# Déclencheurs : quand est-ce que ce workflow s'exécute ?
 on:
   push:
     branches: [ main, master, develop ]
   pull_request:
     branches: [ main, master ]
 
-# Les jobs à exécuter
 jobs:
   build:
-    # Machine virtuelle Ubuntu
     runs-on: ubuntu-latest
 
     steps:
-      # 1. Récupérer le code
       - name: Checkout code
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
 
-      # 2. Configurer Java pour le backend
       - name: Set up JDK 17
-        uses: actions/setup-java@v3
+        uses: actions/setup-java@v4
         with:
           java-version: '17'
           distribution: 'temurin'
-          cache: maven  # Cache les dépendances Maven
+          cache: maven
 
-      # 3. Compiler le backend
       - name: Build Backend with Maven
         run: |
           cd auction-engine
           mvn clean compile
           echo "✅ Backend compilé avec succès"
 
-      # 4. Configurer Node.js pour le frontend
       - name: Set up Node.js
-        uses: actions/setup-node@v3
+        uses: actions/setup-node@v4
         with:
           node-version: '18'
           cache: 'npm'
           cache-dependency-path: auction-frontend/package-lock.json
 
-      # 5. Installer les dépendances frontend
       - name: Install Frontend Dependencies
         run: |
           cd auction-frontend
-          npm ci  # Installation plus stricte que npm install
+          npm ci
 
-      # 6. Compiler le frontend
       - name: Build Frontend
         run: |
           cd auction-frontend
-          npm run build --prod
+          npm run build
           echo "✅ Frontend compilé avec succès"
 
-      # 7. Optionnel : Lancer les tests backend
       - name: Run Backend Tests
         run: |
           cd auction-engine
           mvn test
-        continue-on-error: true  # Ne bloque pas si pas de tests
-
-      # 8. Optionnel : Linter le frontend
-      - name: Lint Frontend
-        run: |
-          cd auction-frontend
-          npm run lint
         continue-on-error: true
 
-      # 9. Uploader les artefacts (optionnel)
       - name: Upload Backend JAR
         uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: auction-engine/target/*.jar
-        if: success()  # Seulement si le build a réussi
+        if: success()

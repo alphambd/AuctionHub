@@ -23,7 +23,7 @@ jobs:
           cache: maven
 
       - name: Build Backend with Maven
-        working-directory: ./auction-engine 
+        working-directory: ./auction-engine
         run: |
           mvn clean compile
           echo "✅ Backend compilé avec succès"
@@ -33,8 +33,20 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
-          cache: 'npm'
-          cache-dependency-path: auction-frontend/package-lock.json
+
+      - name: Get npm cache directory
+        id: npm-cache-dir
+        shell: bash
+        run: echo "dir=$(npm config get cache)" >> ${GITHUB_OUTPUT}
+
+      - name: Cache npm
+        uses: actions/cache@v4
+        id: npm-cache
+        with:
+          path: ${{ steps.npm-cache-dir.outputs.dir }}
+          key: ${{ runner.os }}-node-${{ hashFiles('auction-frontend/package-lock.json') }}
+          restore-keys: |
+            ${{ runner.os }}-node-
 
       - name: Install Frontend Dependencies
         working-directory: ./auction-frontend

@@ -25,7 +25,7 @@ jobs:
       - name: Build Backend with Maven
         working-directory: ./auction-engine
         run: |
-          mvn clean compile
+          mvn clean package
           echo "✅ Backend compilé avec succès"
 
       # Frontend

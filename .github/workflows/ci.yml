@@ -70,7 +70,7 @@ jobs:
 
       # 9. Uploader les artefacts (optionnel)
       - name: Upload Backend JAR
-        uses: actions/upload-artifact@v3
+        uses: actions/upload-artifact@v4
         with:
           name: backend-jar
           path: auction-engine/target/*.jar
